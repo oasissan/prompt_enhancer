@@ -100,7 +100,7 @@ Make sure you have [Node.js](https://nodejs.org/) (v16+) and `npm` installed.
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/prompt-enhancer.git
+git clone https://github.com/oasissan/prompt_enhancer
 cd prompt-enhancer
 ```
 
