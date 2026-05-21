@@ -34,19 +34,19 @@ The extension features a **self-healing, zero-latency DOM-injection engine** tha
 ## 📸 Extension Showcase
 
 <p align="center">
-  <img src="assets/screenshot_1.png" alt="AI Prompt Refiner Dashboard" width="600" style="border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.2);" />
+  <img src="assets/screenshot_1.png" alt="AI Prompt Refiner Dashboard" width="550" style="border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.2);" />
   <br />
   <em>The high-fidelity glassmorphic overlay modal showing original vs. refined prompt comparison.</em>
 </p>
 
 <p align="center">
-  <img src="assets/screenshot_3.png" alt="Saved Prompts Manager" width="400" style="border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.2);" />
+  <img src="assets/screenshot_2.png" alt="Saved Prompts Manager" width="360" style="border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.2);" />
   <br />
   <em>The sleek Toolbar Popup panel containing active service statuses and the local Saved Prompts Manager.</em>
 </p>
 
 <p align="center">
-  <img src="assets/screenshot_4.png" alt="Secure Settings Options Panel" width="600" style="border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.2);" />
+  <img src="assets/screenshot_3.png" alt="Secure Settings Options Panel" width="700" style="border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.2);" />
   <br />
   <em>The Advanced Configuration Dashboard allowing users to manage providers, select active models, and secure credentials.</em>
 </p>
