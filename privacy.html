@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - AI Prompt Refinement Extension</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #08090d;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --accent-purple: #8b5cf6;
+            --accent-purple-glow: rgba(139, 92, 246, 0.15);
+            --accent-emerald: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 40px 20px;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 20% 10%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .logo-placeholder {
+            font-size: 48px;
+            margin-bottom: 12px;
+            display: inline-block;
+            filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.4));
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 0%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .last-updated {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .policy-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 40px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        section {
+            margin-bottom: 32px;
+        }
+
+        section:last-of-type {
+            margin-bottom: 0;
+        }
+
+        h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 8px;
+        }
+
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: var(--accent-purple);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-purple);
+        }
+
+        p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-bottom: 16px;
+            font-weight: 400;
+        }
+
+        ul {
+            list-style: none;
+            margin-bottom: 16px;
+            padding-left: 6px;
+        }
+
+        li {
+            color: var(--text-secondary);
+            font-size: 14.5px;
+            margin-bottom: 10px;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        li::before {
+            content: '✦';
+            color: var(--accent-purple);
+            position: absolute;
+            left: 0;
+            font-size: 12px;
+        }
+
+        .highlight-box {
+            background: rgba(139, 92, 246, 0.05);
+            border: 1px dashed rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .highlight-box span.icon {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .highlight-box p {
+            margin-bottom: 0;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px 0;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 40px;
+        }
+
+        footer a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        footer a:hover {
+            color: var(--accent-purple);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 20px 10px;
+            }
+            .policy-card {
+                padding: 24px 16px;
+                border-radius: 16px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-placeholder">✨</div>
+            <h1>AI Prompt Refinement</h1>
+            <div class="last-updated">Last Updated: May 22, 2026</div>
+        </header>
+
+        <main class="policy-card">
+            <div class="highlight-box">
+                <span class="icon">🔒</span>
+                <p><strong>Privacy Commitment:</strong> The AI Prompt Refinement extension operates on a zero-tracking, zero-intermediary architecture. Your API keys, settings, and prompts never pass through any server under our control. Everything stays 100% in your browser.</p>
+            </div>
+
+            <section>
+                <h2>1. Introduction</h2>
+                <p>Welcome to <strong>AI Prompt Refinement</strong> ("we", "our", or "us"). We are fully committed to protecting your privacy. This Privacy Policy details how we handle information in connection with your use of our Chrome extension.</p>
+                <p>Unlike traditional extensions, AI Prompt Refinement does not maintain any remote databases, servers, or user-tracking accounts. Your data belongs completely to you.</p>
+            </section>
+
+            <section>
+                <h2>2. Information Collection</h2>
+                <p>We do not collect, capture, monitor, or store any personal data. Specifically:</p>
+                <ul>
+                    <li><strong>No Personal Identifiable Information (PII):</strong> We do not ask you to register an account, and we do not collect your name, email, browser history, or IP address.</li>
+                    <li><strong>No Usage Tracking or Telemetry:</strong> We do not deploy any third-party analytics trackers, cookies, or telemetry software inside the extension.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>3. Local Storage & Sync</h2>
+                <p>Any configuration details or data you input are stored strictly within your Google Chrome sandbox:</p>
+                <ul>
+                    <li><strong>API Credentials:</strong> Your Gemini, OpenAI, and Anthropic API keys are saved 100% locally and securely in your own browser's Chrome storage.</li>
+                    <li><strong>Synced Across Your Devices:</strong> We use Chrome's standard secure API (<code>chrome.storage.sync</code>) so your saved settings and prompt libraries sync safely across devices linked under your personal Google Account. No third-party servers are ever involved.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>4. Third-Party API Services</h2>
+                <p>When you trigger prompt refinement inside your LLM interfaces (e.g., ChatGPT, Claude, Gemini, or LMSYS):</p>
+                <ul>
+                    <li>The extension makes a direct, secure HTTPS request from your local browser's background service worker to your selected AI provider's official endpoint (e.g., Google's Gemini, OpenAI, or Anthropic API).</li>
+                    <li>These requests use the API keys you provided. Your raw prompts are sent directly to the official provider endpoints and never transit through any external backend or intermediary servers.</li>
+                    <li>Please refer to the privacy policy of your selected AI provider (Google, OpenAI, or Anthropic) regarding how they process prompts sent via API keys.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>5. Data Security</h2>
+                <p>Because your keys and settings are stored locally in your browser sandbox, their security is backed by Google Chrome’s native security framework. To safeguard your API keys, we strictly adhere to Chrome Manifest V3 guidelines—containing no remote scripts, no dynamic evaluations (e.g., <code>eval()</code>), and no unsafe DOM injections.</p>
+            </section>
+
+            <section>
+                <h2>6. Managing Your Data</h2>
+                <p>You have full, unconditional control over your data:</p>
+                <ul>
+                    <li><strong>Viewing/Editing Settings:</strong> You can inspect, modify, or delete your saved prompt templates and API keys at any time via the extension's options page.</li>
+                    <li><strong>Full Removal:</strong> Uninstalling the extension automatically and permanently wipes all local storage, settings, and cached keys from your device.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>7. Contact & Support</h2>
+                <p>If you have any questions, concerns, or feedback about this Privacy Policy, please open an issue in the official GitHub repository or contact the project maintainers directly via our source repository.</p>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 AI Prompt Refinement. Released under the MIT License.</p>
+            <p><a href="https://github.com/oasissan/prompt_enhancer" target="_blank" rel="noopener noreferrer">Official GitHub Repository</a></p>
+        </footer>
+    </div>
+</body>
+</html>
