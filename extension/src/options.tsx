@@ -9,7 +9,8 @@ interface ModelInfo {
   desc: string;
 }
 
-const PROVIDER_MODELS: Record<'gemini' | 'openai' | 'anthropic', ModelInfo[]> = {
+const PROVIDER_MODELS: Record<'gemini' | 'openai' | 'anthropic' | 'gemini-web', ModelInfo[]> = {
+  'gemini-web': [],
   gemini: [
     { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash', desc: 'Newest, ultra-fast agentic flagship (GA May 2026)' },
     { id: 'gemini-3.1-pro', name: 'Gemini 3.1 Pro', desc: 'Advanced reasoning, deep coding & planning' },
@@ -30,7 +31,8 @@ const PROVIDER_MODELS: Record<'gemini' | 'openai' | 'anthropic', ModelInfo[]> = 
   ],
 };
 
-const DEFAULT_MODELS: Record<'gemini' | 'openai' | 'anthropic', string> = {
+const DEFAULT_MODELS: Record<'gemini' | 'openai' | 'anthropic' | 'gemini-web', string> = {
+  'gemini-web': '',
   gemini: 'gemini-3.5-flash',
   openai: 'gpt-5.5-instant',
   anthropic: 'claude-opus-4.7',
@@ -61,7 +63,7 @@ const Options = () => {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleProviderChange = (provider: 'gemini' | 'openai' | 'anthropic') => {
+  const handleProviderChange = (provider: 'gemini' | 'openai' | 'anthropic' | 'gemini-web') => {
     // Check if the current preferred model is compatible with the new provider
     const isCompatible = PROVIDER_MODELS[provider].some(m => m.id === data.preferredModel);
     
@@ -101,30 +103,33 @@ const Options = () => {
               <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '14px', fontWeight: 500 }}>
                 Active Prompt Engine
               </label>
-              <select 
+              <select
                 value={activeProvider}
-                onChange={(e) => handleProviderChange(e.target.value as 'gemini' | 'openai' | 'anthropic')}
+                onChange={(e) => handleProviderChange(e.target.value as 'gemini' | 'openai' | 'anthropic' | 'gemini-web')}
                 style={{ textTransform: 'capitalize' }}
               >
-                <option value="gemini">Google Gemini</option>
+                <option value="gemini-web">Gemini Web (Free — no API key)</option>
+                <option value="gemini">Google Gemini API</option>
                 <option value="openai">OpenAI GPT</option>
                 <option value="anthropic">Anthropic Claude</option>
               </select>
             </div>
 
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '14px', fontWeight: 500 }}>
-                Preferred AI Model
-              </label>
-              <select 
-                value={data.preferredModel}
-                onChange={(e) => setData({ ...data, preferredModel: e.target.value })}
-              >
-                {availableModels.map(m => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
-            </div>
+            {activeProvider !== 'gemini-web' && (
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '14px', fontWeight: 500 }}>
+                  Preferred AI Model
+                </label>
+                <select
+                  value={data.preferredModel}
+                  onChange={(e) => setData({ ...data, preferredModel: e.target.value })}
+                >
+                  {availableModels.map(m => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Model Description Box */}
@@ -133,12 +138,26 @@ const Options = () => {
               Engine Capabilities
             </strong>
             <span style={{ fontSize: '13.5px', color: '#cbd5e1' }}>
-              {availableModels.find(m => m.id === data.preferredModel)?.desc || 'No description available.'}
+              {activeProvider === 'gemini-web'
+                ? 'Uses your logged-in Gemini session — no API key or cost. Requires you to be signed into gemini.google.com.'
+                : availableModels.find(m => m.id === data.preferredModel)?.desc || 'No description available.'}
             </span>
           </div>
         </div>
 
-        {/* Secure API Key Manager Card */}
+        {/* Secure API Key Manager Card — hidden when using Gemini Web */}
+        {activeProvider === 'gemini-web' ? (
+          <div className="glass-card" style={{ padding: '24px' }}>
+            <h3 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              ✅ No API Key Required
+            </h3>
+            <p style={{ color: '#94a3b8', fontSize: '13.5px', margin: 0, lineHeight: '1.6' }}>
+              <strong style={{ color: '#c084fc' }}>Gemini Web (Free)</strong> uses your existing Google session to power prompt refinement — no API key, no billing.
+              <br /><br />
+              Make sure you are signed into <a href="https://gemini.google.com" target="_blank" rel="noreferrer" style={{ color: '#60a5fa' }}>gemini.google.com</a> in this browser before using the extension.
+            </p>
+          </div>
+        ) : (
         <div className="glass-card" style={{ padding: '24px' }}>
           <h3 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             🔒 Gateway Authentication
@@ -191,6 +210,7 @@ const Options = () => {
             </div>
           </div>
         </div>
+        )}
       </div>
 
 

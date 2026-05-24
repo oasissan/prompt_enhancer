@@ -528,8 +528,9 @@ const App = () => {
       apiKey = data?.anthropicApiKey || '';
       providerName = 'Anthropic';
     }
+    // gemini-web uses the browser session — no API key needed
 
-    if (!apiKey) {
+    if (provider !== 'gemini-web' && !apiKey) {
       triggerError(`Please configure your ${providerName} API Key in the extension options.`);
       if (typeof chrome !== 'undefined' && chrome.runtime) {
         if (chrome.runtime.openOptionsPage) {

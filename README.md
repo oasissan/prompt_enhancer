@@ -67,10 +67,31 @@ When you click the ✨ button, your prompt is analyzed and optimized asynchronou
 * **Chrome Sync Support:** All saved prompts are synced automatically across your devices under your Google Profile.
 
 ### 4. Elite Multi-Provider Integration
-Configure your preferred prompt-engineering gateway in the options page. We support top-tier reasoning and flagship models out-of-the-box:
-* 🟢 **Google Gemini Gateway:** `Gemini 3.5 Flash` (default), `Gemini 3.1 Pro`, `Gemini 3.1 Flash-Lite`, and legacy models.
+Configure your preferred prompt-engineering gateway in the options page. Choose between a **completely free session-based option** or any of the premium API providers:
+
+* 🆓 **Gemini Web (Free) — No API key required:** Powered by your existing logged-in Gemini session. No billing, no setup — just sign into [gemini.google.com](https://gemini.google.com) and go. Uses Gemini's internal streaming API with your browser cookies.
+* 🟢 **Google Gemini API:** `Gemini 3.5 Flash` (default), `Gemini 3.1 Pro`, `Gemini 3.1 Flash-Lite`, and legacy models.
 * 🟢 **OpenAI GPT Gateway:** `GPT-5.5 Instant` (default), `GPT-5.5`, `GPT-5.3 Codex`, and legacy `GPT-4o`.
 * 🟢 **Anthropic Claude Gateway:** `Claude 4.7 Opus` (default), `Claude 4.6 Sonnet`, `Claude 4.5 Haiku`.
+
+---
+
+---
+
+## 🆓 Using Gemini Web (Free Mode)
+
+The **Gemini Web** provider lets you use the extension at zero cost by piggy-backing on your active Google session — no API keys, no credit card, no monthly bills.
+
+**How it works under the hood:**
+1. When you click ✨, the background service worker fetches `gemini.google.com` with your browser cookies to extract a short-lived session token.
+2. It calls Gemini's internal streaming endpoint (`StreamGenerate`) — the same one the Gemini web UI uses — passing your prompt alongside that token.
+3. The streamed response is parsed and returned to the in-page previewer, just like any other provider.
+
+**Requirements:**
+* Be signed into [gemini.google.com](https://gemini.google.com) in Chrome before using the extension.
+* That's it. No API key field, no model selection — just select "Gemini Web (Free)" in the options page and save.
+
+> **Note:** This mode uses an unofficial internal API. While it works reliably today, Google may update their web interface over time. If it ever stops working, switch to the Gemini API provider as a fallback.
 
 ---
 
@@ -138,7 +159,7 @@ prompt_enhancer/
 │   │   └── manifest.json    # Manifest V3 extension configuration
 │   ├── src/                 # Extension source scripts
 │   │   ├── assets/          # Internal React styling assets
-│   │   ├── background.ts    # Service worker (Token api router)
+│   │   ├── background.ts    # Service worker (API router — Gemini Web, Gemini API, OpenAI, Anthropic)
 │   │   ├── content.tsx      # Injected Content Script (Shadow DOM overlays)
 │   │   ├── index.css        # Global premium css design framework
 │   │   ├── main.tsx         # Extension Pop-up window React dashboard

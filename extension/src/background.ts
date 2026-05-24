@@ -33,11 +33,46 @@ function applyTemplateRule(text: string, rule: string): string {
   return `${text}\n\n${trimmedRule}`.trim();
 }
 
+async function extractGeminiWebTokens(): Promise<{ at: string; bl: string; sid: string }> {
+  const resp = await fetch('https://gemini.google.com/app', {
+    credentials: 'include',
+    headers: { 'Accept': 'text/html' },
+  });
+  if (!resp.ok) {
+    throw new Error('Could not reach Gemini. Please make sure you are logged into gemini.google.com.');
+  }
+  const html = await resp.text();
+  const at = html.match(/"SNlM0e"\s*:\s*"([^"]+)"/)?.[1];
+  const bl = html.match(/"cfb2h"\s*:\s*"([^"]+)"/)?.[1];
+  const sid = html.match(/"FdrFJe"\s*:\s*"([^"]+)"/)?.[1];
+  if (!at || !bl) {
+    throw new Error('Gemini session not found. Please log into gemini.google.com first, then try again.');
+  }
+  return { at, bl, sid: sid || '' };
+}
+
+function parseGeminiWebResponse(rawText: string): string {
+  let finalText = '';
+  const regex = /^\[\[.*/gm;
+  let m;
+  while ((m = regex.exec(rawText)) !== null) {
+    try {
+      const arr = JSON.parse(m[0]);
+      if (arr[0]?.[0] === 'wrb.fr' && arr[0]?.[2]) {
+        const inner = JSON.parse(arr[0][2]);
+        const candidate = inner?.[4]?.[0]?.[1]?.[0];
+        if (candidate) finalText = candidate;
+      }
+    } catch (_) {}
+  }
+  return finalText;
+}
+
 async function handleRefinement(payload: {
   text: string;
   template: Template;
   apiKey?: string;
-  provider?: 'gemini' | 'openai' | 'anthropic';
+  provider?: 'gemini' | 'openai' | 'anthropic' | 'gemini-web';
   model?: string;
 }) {
   const { text, template, apiKey, provider = 'gemini', model } = payload;
@@ -48,6 +83,41 @@ async function handleRefinement(payload: {
   }
 
   // AI-powered processing
+  if (provider === 'gemini-web') {
+    try {
+      const { at, bl, sid } = await extractGeminiWebTokens();
+      const fullPrompt = `You are an expert prompt engineer. Your task is to refine the user's prompt based on the following rule. Do not answer the prompt itself, ONLY output the refined, improved prompt text.\n\nRule: ${template.rule}\n\nOriginal Prompt:\n${text}`;
+      const innerReq = [
+        [fullPrompt, 0, null, null, null, null, 0],
+        ['en'],
+        ['', '', '', null, null, null, null, null, null, ''],
+      ];
+      const fReq = JSON.stringify([null, JSON.stringify(innerReq)]);
+      const reqBody = new URLSearchParams({ at, 'f.req': fReq });
+      const reqId = Math.floor(Math.random() * 9000000) + 1000000;
+      const streamResp = await fetch(
+        `https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate?bl=${encodeURIComponent(bl)}&f.sid=${encodeURIComponent(sid)}&hl=en&_reqid=${reqId}&rt=c`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: reqBody.toString(),
+          credentials: 'include',
+        }
+      );
+      if (!streamResp.ok) {
+        throw new Error(`Gemini Web returned ${streamResp.status}. Make sure you are logged into gemini.google.com.`);
+      }
+      const rawText = await streamResp.text();
+      const refinedText = parseGeminiWebResponse(rawText);
+      if (!refinedText) {
+        throw new Error('No response from Gemini Web. Make sure you are logged into gemini.google.com.');
+      }
+      return { success: true, refinedText: refinedText.trim() };
+    } catch (error: any) {
+      throw new Error(error.message || 'Gemini Web request failed.');
+    }
+  }
+
   if (!apiKey) {
     throw new Error('API key is missing for the selected provider.');
   }

@@ -10,7 +10,7 @@ export interface StorageData {
   apiKey: string; // Gemini API Key
   openaiApiKey: string;
   anthropicApiKey: string;
-  preferredProvider: 'gemini' | 'openai' | 'anthropic';
+  preferredProvider: 'gemini' | 'openai' | 'anthropic' | 'gemini-web';
   preferredModel: string;
   templates: Template[];
   savedPrompts?: string[];
