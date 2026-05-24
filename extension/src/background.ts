@@ -51,8 +51,9 @@ async function extractGeminiWebTokens(): Promise<{ at: string; bl: string; sid: 
   return { at, bl, sid: sid || '' };
 }
 
-function parseGeminiWebResponse(rawText: string): string {
-  let finalText = '';
+function parseGeminiWebResponse(rawText: string): { text: string; conversationId: string } {
+  let text = '';
+  let conversationId = '';
   const regex = /^\[\[.*/gm;
   let m;
   while ((m = regex.exec(rawText)) !== null) {
@@ -61,11 +62,26 @@ function parseGeminiWebResponse(rawText: string): string {
       if (arr[0]?.[0] === 'wrb.fr' && arr[0]?.[2]) {
         const inner = JSON.parse(arr[0][2]);
         const candidate = inner?.[4]?.[0]?.[1]?.[0];
-        if (candidate) finalText = candidate;
+        if (candidate) text = candidate;
+        if (inner?.[1]?.[0]) conversationId = inner[1][0];
       }
     } catch (_) {}
   }
-  return finalText;
+  return { text, conversationId };
+}
+
+async function deleteGeminiConversation(conversationId: string, at: string, bl: string, sid: string): Promise<void> {
+  if (!conversationId) return;
+  const makeReq = async (rpcid: string, inner: string) => {
+    const reqId = Math.floor(Math.random() * 9000000) + 1000000;
+    const fReq = JSON.stringify([[[rpcid, inner, null, 'generic']]]);
+    await fetch(
+      `https://gemini.google.com/_/BardChatUi/data/batchexecute?rpcids=${rpcid}&bl=${encodeURIComponent(bl)}&f.sid=${encodeURIComponent(sid)}&hl=en&_reqid=${reqId}&rt=c`,
+      { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ at, 'f.req': fReq }).toString(), credentials: 'include' }
+    );
+  };
+  await makeReq('GzXR5e', JSON.stringify([conversationId]));
+  await makeReq('qWymEb', JSON.stringify([conversationId, [1, null, 0, 1]]));
 }
 
 async function handleRefinement(payload: {
@@ -108,10 +124,12 @@ async function handleRefinement(payload: {
         throw new Error(`Gemini Web returned ${streamResp.status}. Make sure you are logged into gemini.google.com.`);
       }
       const rawText = await streamResp.text();
-      const refinedText = parseGeminiWebResponse(rawText);
+      const { text: refinedText, conversationId } = parseGeminiWebResponse(rawText);
       if (!refinedText) {
         throw new Error('No response from Gemini Web. Make sure you are logged into gemini.google.com.');
       }
+      // Fire-and-forget: delete the conversation so it never appears in history
+      deleteGeminiConversation(conversationId, at, bl, sid).catch(() => {});
       return { success: true, refinedText: refinedText.trim() };
     } catch (error: any) {
       throw new Error(error.message || 'Gemini Web request failed.');
