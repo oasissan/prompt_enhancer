@@ -73,7 +73,7 @@ const MASTER_TEMPLATE: Template = {
   id: 'master_enhance',
   name: 'AI Auto-Enhance',
   description: 'AI-optimized response quality booster',
-  rule: 'Rewrite and optimize this prompt to be clear, structured, and highly detailed. Add context, examples, constraints, or formatting instructions where appropriate to ensure the AI generates the absolute best response. Maintain the original core intent but elevate the vocabulary, structure, and prompt-engineering best practices.',
+  rule: 'Comprehensively enhance this prompt to maximize AI response quality. Clarify the language and sentence structure, add relevant context about the purpose and audience, specify the desired output format and length, rephrase the main request as a direct question where appropriate, and break any complex tasks into numbered steps. Preserve the original intent.',
   type: 'ai'
 };
 

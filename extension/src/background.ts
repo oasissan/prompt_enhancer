@@ -19,6 +19,26 @@ chrome.runtime.onMessage.addListener((request: any, _sender: chrome.runtime.Mess
 
 const promptPlaceholderRegex = /\{\{\s*prompt\s*\}\}|\{\s*prompt\s*\}|%PROMPT%/gi;
 
+function buildSystemInstructions(rule: string): string {
+  return `You are an expert prompt engineer. How should the following prompt be rewritten to produce the best possible AI response?
+
+Refinement rule to apply: "${rule}"
+
+When improving the prompt, use these techniques where relevant:
+1. Clarity & flow — Write with natural, flowing sentences. Remove ambiguity and isolated keywords.
+2. Context — Add background information that helps the AI understand the purpose and respond accurately.
+3. Output directive — Specify the desired response type, format, or length when it strengthens the prompt.
+4. End-focus — State the main request at or near the end to keep the model anchored on the goal.
+5. Interrogative framing — Phrase the request as a direct question (who, what, where, when, why, how) where appropriate.
+6. Subtask breakdown — Break complex requests into numbered steps or sub-questions when the task is multi-part.
+
+Example:
+- Before: "Summarize this article"
+- After: "What are the key takeaways from this article? Provide a 3-sentence summary written for a general audience."
+
+Return ONLY the improved prompt. Do not explain your changes, add labels, or answer the prompt itself.`;
+}
+
 function applyTemplateRule(text: string, rule: string): string {
   const trimmedRule = rule?.trim();
   if (!trimmedRule) return text;
@@ -102,7 +122,7 @@ async function handleRefinement(payload: {
   if (provider === 'gemini-web') {
     try {
       const { at, bl, sid } = await extractGeminiWebTokens();
-      const fullPrompt = `You are an expert prompt engineer. Your task is to refine the user's prompt based on the following rule. Do not answer the prompt itself, ONLY output the refined, improved prompt text.\n\nRule: ${template.rule}\n\nOriginal Prompt:\n${text}`;
+      const fullPrompt = `${buildSystemInstructions(template.rule)}\n\nOriginal Prompt:\n${text}`;
       const innerReq = [
         [fullPrompt, 0, null, null, null, null, 0],
         ['en'],
@@ -144,7 +164,7 @@ async function handleRefinement(payload: {
     if (provider === 'gemini') {
       const activeModel = model || 'gemini-3.5-flash';
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${apiKey}`;
-      const systemInstructions = `You are an expert prompt engineer. Your task is to refine the user's prompt based on the following rule. Do not answer the prompt itself, ONLY output the refined, improved prompt text.\n\nRule: ${template.rule}\n\nOriginal Prompt:\n${text}`;
+      const systemInstructions = `${buildSystemInstructions(template.rule)}\n\nOriginal Prompt:\n${text}`;
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -181,7 +201,7 @@ async function handleRefinement(payload: {
     if (provider === 'openai') {
       const activeModel = model || 'gpt-5.5-instant';
       const endpoint = 'https://api.openai.com/v1/chat/completions';
-      const systemPrompt = `You are an expert prompt engineer. Your task is to refine the user's prompt based on the following rule. Do not answer the prompt itself, ONLY output the refined, improved prompt text.\n\nRule: ${template.rule}`;
+      const systemPrompt = buildSystemInstructions(template.rule);
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -218,7 +238,7 @@ async function handleRefinement(payload: {
     if (provider === 'anthropic') {
       const activeModel = model || 'claude-opus-4.7';
       const endpoint = 'https://api.anthropic.com/v1/messages';
-      const systemPrompt = `You are an expert prompt engineer. Your task is to refine the user's prompt based on the following rule. Do not answer the prompt itself, ONLY output the refined, improved prompt text.\n\nRule: ${template.rule}`;
+      const systemPrompt = buildSystemInstructions(template.rule);
 
       const response = await fetch(endpoint, {
         method: 'POST',
