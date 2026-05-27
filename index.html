@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Prompt Refinement — Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@500;700;800&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #05060d;
+      --surface:   rgba(255,255,255,0.03);
+      --border:    rgba(255,255,255,0.07);
+      --purple:    #8b5cf6;
+      --purple-lt: #c084fc;
+      --blue:      #60a5fa;
+      --green:     #34d399;
+      --text:      #f1f5f9;
+      --muted:     #64748b;
+      --dim:       #94a3b8;
+      --font-display: 'Instrument Serif', Georgia, serif;
+      --font-ui:      'Syne', sans-serif;
+      --font-body:    'Outfit', sans-serif;
+      --font-mono:    'DM Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ─── NOISE OVERLAY ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.025;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ─── BACKGROUND ORBS ─── */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%); top: -200px; left: -200px; animation: drift1 20s ease-in-out infinite; }
+    .orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(96,165,250,0.12) 0%, transparent 70%); top: 40vh; right: -150px; animation: drift2 25s ease-in-out infinite; }
+    .orb-3 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(192,132,252,0.1) 0%, transparent 70%); bottom: 10vh; left: 20%; animation: drift3 18s ease-in-out infinite; }
+
+    @keyframes drift1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(40px,60px)} }
+    @keyframes drift2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-50px,30px)} }
+    @keyframes drift3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-40px)} }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      backdrop-filter: blur(24px) saturate(120%);
+      background: rgba(5,6,13,0.75);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(20px, 5vw, 80px);
+      height: 64px;
+    }
+
+    .nav-logo {
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color .2s;
+      letter-spacing: 0.02em;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff !important;
+      background: linear-gradient(135deg, var(--purple), #6366f1);
+      padding: 7px 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: opacity .2s, transform .2s !important;
+    }
+
+    .nav-cta:hover { opacity: .9; transform: translateY(-1px); }
+
+    /* ─── LAYOUT ─── */
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 clamp(20px, 5vw, 60px);
+      position: relative;
+      z-index: 1;
+    }
+
+    section { padding: 100px 0; }
+
+    /* ─── HERO ─── */
+    #hero {
+      padding: 180px 0 120px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--purple-lt);
+      background: rgba(139,92,246,0.1);
+      border: 1px solid rgba(139,92,246,0.25);
+      border-radius: 100px;
+      padding: 5px 14px;
+      margin-bottom: 32px;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(52px, 8vw, 92px);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+
+    .hero-title em {
+      font-style: italic;
+      background: linear-gradient(135deg, #c084fc 0%, #818cf8 50%, #60a5fa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      color: var(--dim);
+      max-width: 520px;
+      margin: 0 auto 48px;
+      font-weight: 300;
+      line-height: 1.65;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, var(--purple), #6366f1);
+      padding: 12px 28px;
+      border-radius: 10px;
+      text-decoration: none;
+      box-shadow: 0 8px 24px rgba(139,92,246,0.3);
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(139,92,246,0.45);
+    }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--dim);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 12px 24px;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: color .2s, border-color .2s, transform .2s;
+    }
+
+    .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+
+    /* ─── PLATFORM STRIP ─── */
+    .platform-strip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 64px;
+      padding-top: 48px;
+      border-top: 1px solid var(--border);
+    }
+
+    .platform-strip-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-right: 8px;
+      flex-basis: 100%;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .platform-pill {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--dim);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 6px 16px;
+      transition: color .2s, border-color .2s;
+    }
+
+    .platform-pill:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+    /* ─── SECTION HEADERS ─── */
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--purple-lt);
+      margin-bottom: 16px;
+    }
+
+    .section-label::before {
+      content: '';
+      display: block;
+      width: 20px;
+      height: 1px;
+      background: var(--purple-lt);
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 4vw, 48px);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .section-title em {
+      font-style: italic;
+      color: var(--purple-lt);
+    }
+
+    .section-desc {
+      font-size: 16px;
+      color: var(--dim);
+      max-width: 540px;
+      font-weight: 300;
+    }
+
+    /* ─── FEATURES GRID ─── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 56px;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .3s, transform .3s;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 0% 0%, rgba(139,92,246,0.08) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    .feature-card:hover { border-color: rgba(139,92,246,0.3); transform: translateY(-2px); }
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      font-size: 28px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .feature-title {
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .feature-desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ─── INSTALLATION STEPS ─── */
+    .steps-wrapper {
+      margin-top: 56px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 0 28px;
+      position: relative;
+    }
+
+    .step-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .step-num {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(99,102,241,0.15));
+      border: 1px solid rgba(139,92,246,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-ui);
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--purple-lt);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+      transition: background .3s, box-shadow .3s;
+    }
+
+    .step:hover .step-num {
+      background: linear-gradient(135deg, rgba(139,92,246,0.4), rgba(99,102,241,0.3));
+      box-shadow: 0 0 20px rgba(139,92,246,0.3);
+    }
+
+    .step-line {
+      flex: 1;
+      width: 1px;
+      background: linear-gradient(to bottom, rgba(139,92,246,0.3), rgba(139,92,246,0.05));
+      margin: 4px 0;
+    }
+
+    .step:last-child .step-line { display: none; }
+
+    .step-body {
+      padding: 0 0 48px;
+    }
+
+    .step:last-child .step-body { padding-bottom: 0; }
+
+    .step-title {
+      font-family: var(--font-ui);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      padding-top: 10px;
+    }
+
+    .step-desc {
+      font-size: 15px;
+      color: var(--dim);
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+
+    /* ─── CALLOUT ─── */
+    .callout {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: rgba(96,165,250,0.06);
+      border: 1px solid rgba(96,165,250,0.2);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 13.5px;
+      color: #93c5fd;
+      line-height: 1.6;
+      margin-top: 12px;
+    }
+
+    .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    .callout-tip {
+      background: rgba(52,211,153,0.05);
+      border-color: rgba(52,211,153,0.2);
+      color: #6ee7b7;
+    }
+
+    /* ─── CODE BLOCK ─── */
+    .code-path {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: #c084fc;
+      background: rgba(139,92,246,0.1);
+      border: 1px solid rgba(139,92,246,0.2);
+      border-radius: 6px;
+      padding: 3px 10px;
+      margin: 0 2px;
+    }
+
+    /* ─── PROVIDER SECTION ─── */
+    .providers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-top: 48px;
+    }
+
+    .provider-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .3s, transform .3s;
+      cursor: default;
+    }
+
+    .provider-card.free {
+      border-color: rgba(52,211,153,0.25);
+      background: rgba(52,211,153,0.03);
+    }
+
+    .provider-card:hover { transform: translateY(-3px); }
+    .provider-card.free:hover { border-color: rgba(52,211,153,0.45); }
+    .provider-card:not(.free):hover { border-color: rgba(139,92,246,0.3); }
+
+    .provider-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .provider-icon { font-size: 26px; }
+
+    .provider-badge {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-radius: 100px;
+      padding: 3px 8px;
+    }
+
+    .badge-free { color: var(--green); background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.25); }
+    .badge-api  { color: var(--purple-lt); background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.25); }
+
+    .provider-name {
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .provider-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .provider-models {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .model-tag {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 4px;
+      padding: 2px 7px;
+    }
+
+    /* ─── USAGE STEPS ─── */
+    .usage-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 48px;
+      counter-reset: usage-counter;
+    }
+
+    .usage-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .3s, transform .3s;
+      counter-increment: usage-counter;
+    }
+
+    .usage-card::after {
+      content: counter(usage-counter, decimal-leading-zero);
+      position: absolute;
+      bottom: -8px;
+      right: 14px;
+      font-family: var(--font-ui);
+      font-size: 60px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.025);
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .usage-card:hover { border-color: rgba(139,92,246,0.25); transform: translateY(-2px); }
+
+    .usage-emoji { font-size: 24px; margin-bottom: 14px; display: block; }
+
+    .usage-title {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .usage-desc { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+
+    /* ─── DIVIDER ─── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0;
+    }
+
+    /* ─── FAQ ─── */
+    .faq-list { margin-top: 48px; display: flex; flex-direction: column; gap: 12px; }
+
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .faq-q {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      gap: 16px;
+      transition: color .2s;
+    }
+
+    .faq-q:hover { color: var(--purple-lt); }
+
+    .faq-chevron {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      color: var(--muted);
+      transition: transform .3s;
+    }
+
+    .faq-item.open .faq-chevron { transform: rotate(180deg); }
+
+    .faq-a {
+      display: none;
+      padding: 0 24px 20px;
+      font-size: 14.5px;
+      color: var(--dim);
+      line-height: 1.7;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+
+    .faq-item.open .faq-a { display: block; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    footer p {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    footer a { color: var(--purple-lt); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ─── SCROLL REVEAL ─── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .6s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1);
+    }
+
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    .reveal-delay-1 { transition-delay: .1s; }
+    .reveal-delay-2 { transition-delay: .2s; }
+    .reveal-delay-3 { transition-delay: .3s; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 680px) {
+      .nav-links { display: none; }
+      .features-grid, .providers-grid, .usage-grid { grid-template-columns: 1fr; }
+      .step { grid-template-columns: 48px 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- ─── NAV ─── -->
+  <nav>
+    <a href="#" class="nav-logo">
+      <span>✨</span> AI Prompt Refinement
+    </a>
+    <ul class="nav-links">
+      <li><a href="#install">Install</a></li>
+      <li><a href="#setup">Setup</a></li>
+      <li><a href="#usage">Usage</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="https://github.com/oasissan/prompt_enhancer" target="_blank" class="nav-cta">GitHub ↗</a></li>
+    </ul>
+  </nav>
+
+  <!-- ─── HERO ─── -->
+  <section id="hero">
+    <div class="container" style="text-align:center;">
+      <div class="hero-badge reveal">✦ Chrome Extension · Manifest V3</div>
+      <h1 class="hero-title reveal reveal-delay-1">
+        Elevate every<br /><em>prompt you write</em>
+      </h1>
+      <p class="hero-sub reveal reveal-delay-2">
+        One click rewrites your raw idea into a precise, structured, context-rich prompt — right inside ChatGPT, Claude, Gemini, and more.
+      </p>
+      <div class="hero-actions reveal reveal-delay-3">
+        <a href="#install" class="btn-primary">
+          <span>⚡</span> Get Started
+        </a>
+        <a href="https://github.com/oasissan/prompt_enhancer" target="_blank" class="btn-ghost">
+          <span>⭐</span> Star on GitHub
+        </a>
+      </div>
+
+      <div class="platform-strip reveal">
+        <span class="platform-strip-label">Works seamlessly on</span>
+        <span class="platform-pill">🤖 ChatGPT</span>
+        <span class="platform-pill">🧠 Claude</span>
+        <span class="platform-pill">♊ Google Gemini</span>
+        <span class="platform-pill">⚔️ LMSYS Arena</span>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ─── FEATURES ─── -->
+  <section id="features">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label">What's included</span>
+        <h2 class="section-title">Everything you need to<br /><em>prompt better</em></h2>
+        <p class="section-desc">A complete toolkit that lives inside your browser — no new tabs, no copy-pasting.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card reveal reveal-delay-1">
+          <span class="feature-icon">✨</span>
+          <div class="feature-title">Smart Wand Button</div>
+          <p class="feature-desc">A sleek ✨ button injects next to every chat input, adapting to dark and light mode automatically.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <span class="feature-icon">🪟</span>
+          <div class="feature-title">Side-by-Side Preview</div>
+          <p class="feature-desc">See the original vs. optimized prompt in a glassmorphic overlay — review, edit, copy, or accept with one click.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-3">
+          <span class="feature-icon">💾</span>
+          <div class="feature-title">Saved Prompts Library</div>
+          <p class="feature-desc">Save your best optimized prompts and access them from the toolbar popup. Synced across devices via Chrome Sync.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-1">
+          <span class="feature-icon">🔌</span>
+          <div class="feature-title">Multi-Provider Support</div>
+          <p class="feature-desc">Use Gemini Web for free, or plug in your own Gemini, OpenAI, or Anthropic API key for premium models.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <span class="feature-icon">🔒</span>
+          <div class="feature-title">100% Local & Private</div>
+          <p class="feature-desc">API keys are stored exclusively in your browser's secure local storage. Zero telemetry, zero third-party servers.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-3">
+          <span class="feature-icon">⚡</span>
+          <div class="feature-title">Self-Healing Injection</div>
+          <p class="feature-desc">A smart scanner re-injects the button after SPA navigations, so it's always there when you need it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ─── INSTALL ─── -->
+  <section id="install">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label">Installation</span>
+        <h2 class="section-title">Up and running<br /><em>in 2 minutes</em></h2>
+        <p class="section-desc">No account, no sign-up. Just download, load, and go.</p>
+      </div>
+
+      <div class="steps-wrapper">
+
+        <div class="step reveal">
+          <div class="step-left">
+            <div class="step-num">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">Download the extension</div>
+            <p class="step-desc">Grab the latest <code class="code-path">extension.zip</code> from the GitHub releases page, then unzip it to a permanent folder on your computer.</p>
+            <a href="https://github.com/oasissan/prompt_enhancer/releases" target="_blank" class="btn-ghost" style="display:inline-flex;margin-top:4px;">
+              ⬇️ Download extension.zip
+            </a>
+            <div class="callout" style="margin-top:14px;">
+              <span class="callout-icon">ℹ️</span>
+              <span>Keep the unzipped folder in a stable location — Chrome will stop the extension if you delete or move it later.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="step reveal">
+          <div class="step-left">
+            <div class="step-num">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">Open Chrome Extensions</div>
+            <p class="step-desc">In Chrome, navigate to <code class="code-path">chrome://extensions</code> in the address bar and press Enter.</p>
+          </div>
+        </div>
+
+        <div class="step reveal">
+          <div class="step-left">
+            <div class="step-num">3</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">Enable Developer Mode</div>
+            <p class="step-desc">Toggle the <strong style="color:var(--text)">Developer mode</strong> switch in the top-right corner of the Extensions page. This unlocks the ability to load unpacked extensions.</p>
+          </div>
+        </div>
+
+        <div class="step reveal">
+          <div class="step-left">
+            <div class="step-num">4</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">Load the unpacked extension</div>
+            <p class="step-desc">Click <strong style="color:var(--text)">Load unpacked</strong> and select the unzipped folder (or the <code class="code-path">dist/</code> subfolder if you built from source). The ✨ icon will appear in your Chrome toolbar immediately.</p>
+            <div class="callout callout-tip" style="margin-top:14px;">
+              <span class="callout-icon">✅</span>
+              <span>If you downloaded the zip, load the unzipped folder directly. If you cloned the repo and ran <code style="font-family:var(--font-mono);font-size:12px;">npm run build</code>, load the <code style="font-family:var(--font-mono);font-size:12px;">extension/dist</code> folder instead.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="step reveal">
+          <div class="step-left">
+            <div class="step-num">5</div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">Pin it to your toolbar</div>
+            <p class="step-desc">Click the puzzle piece 🧩 icon in Chrome's toolbar, find <strong style="color:var(--text)">AI Prompt Refinement</strong>, and click the pin icon so it's always one click away.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ─── SETUP ─── -->
+  <section id="setup">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label">Configuration</span>
+        <h2 class="section-title">Choose your<br /><em>AI provider</em></h2>
+        <p class="section-desc">Click the ✨ toolbar icon → <strong style="color:var(--text)">Manage Settings</strong> (or right-click → Options) to open the configuration panel.</p>
+      </div>
+
+      <div class="providers-grid">
+
+        <div class="provider-card free reveal reveal-delay-1">
+          <div class="provider-top">
+            <span class="provider-icon">🆓</span>
+            <span class="provider-badge badge-free">Free</span>
+          </div>
+          <div class="provider-name">Gemini Web</div>
+          <p class="provider-desc">Uses your active Google session — no API key, no billing. Just sign in to Gemini and select this option.</p>
+          <div class="provider-models">
+            <span class="model-tag">No key required</span>
+          </div>
+        </div>
+
+        <div class="provider-card reveal reveal-delay-2">
+          <div class="provider-top">
+            <span class="provider-icon">♊</span>
+            <span class="provider-badge badge-api">API Key</span>
+          </div>
+          <div class="provider-name">Google Gemini</div>
+          <p class="provider-desc">Connect your Gemini API key from Google AI Studio for the latest production models.</p>
+          <div class="provider-models">
+            <span class="model-tag">gemini-3.5-flash</span>
+            <span class="model-tag">gemini-3.1-pro</span>
+          </div>
+        </div>
+
+        <div class="provider-card reveal reveal-delay-3">
+          <div class="provider-top">
+            <span class="provider-icon">🟢</span>
+            <span class="provider-badge badge-api">API Key</span>
+          </div>
+          <div class="provider-name">OpenAI GPT</div>
+          <p class="provider-desc">Use your OpenAI API key to access GPT-5.5 Instant and other flagship models.</p>
+          <div class="provider-models">
+            <span class="model-tag">gpt-5.5-instant</span>
+            <span class="model-tag">gpt-5.5</span>
+          </div>
+        </div>
+
+        <div class="provider-card reveal reveal-delay-1">
+          <div class="provider-top">
+            <span class="provider-icon">🧠</span>
+            <span class="provider-badge badge-api">API Key</span>
+          </div>
+          <div class="provider-name">Anthropic Claude</div>
+          <p class="provider-desc">Connect your Anthropic key for Claude Opus 4.7, Sonnet 4.6, and Haiku 4.5.</p>
+          <div class="provider-models">
+            <span class="model-tag">claude-opus-4.7</span>
+            <span class="model-tag">claude-sonnet-4.6</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- API key setup callout -->
+      <div style="margin-top:40px;" class="reveal">
+        <div class="callout callout-tip">
+          <span class="callout-icon">💡</span>
+          <span>
+            <strong style="color:var(--text)">Recommended for first-timers:</strong> Start with <strong>Gemini Web (Free)</strong> — sign into
+            <a href="https://gemini.google.com" target="_blank" style="color:#60a5fa;">gemini.google.com</a>,
+            select "Gemini Web (Free)" in Settings, hit Save. That's it.
+          </span>
+        </div>
+        <div class="callout" style="margin-top:10px;">
+          <span class="callout-icon">🔑</span>
+          <span>
+            For API providers: paste your key into the matching field in Settings and click <strong style="color:var(--text)">Save Configuration</strong>. Keys are stored 100% locally in your Chrome profile — never transmitted anywhere else.
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ─── USAGE ─── -->
+  <section id="usage">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label">How to use</span>
+        <h2 class="section-title">Four steps,<br /><em>one great prompt</em></h2>
+        <p class="section-desc">The entire workflow happens inline — you never leave the chat window.</p>
+      </div>
+
+      <div class="usage-grid">
+        <div class="usage-card reveal reveal-delay-1">
+          <span class="usage-emoji">⌨️</span>
+          <div class="usage-title">Type your rough idea</div>
+          <p class="usage-desc">Write your prompt as you normally would — short, messy, or incomplete is perfectly fine.</p>
+        </div>
+        <div class="usage-card reveal reveal-delay-2">
+          <span class="usage-emoji">✨</span>
+          <div class="usage-title">Click the wand button</div>
+          <p class="usage-desc">Hit the ✨ button that appears next to the chat input. It's always there, always ready.</p>
+        </div>
+        <div class="usage-card reveal reveal-delay-3">
+          <span class="usage-emoji">🪟</span>
+          <div class="usage-title">Review the upgrade</div>
+          <p class="usage-desc">A preview panel slides in showing your original vs. the AI-optimized version. Edit the result directly if needed.</p>
+        </div>
+        <div class="usage-card reveal reveal-delay-1">
+          <span class="usage-emoji">🚀</span>
+          <div class="usage-title">Accept &amp; send</div>
+          <p class="usage-desc">Click <strong style="color:var(--text)">Accept &amp; Apply</strong> to paste the refined prompt into the chatbox, then send as usual.</p>
+        </div>
+      </div>
+
+      <div style="margin-top:32px;" class="reveal">
+        <div class="callout callout-tip">
+          <span class="callout-icon">💾</span>
+          <span>Hit <strong style="color:var(--text)">Save</strong> in the preview footer to add any refined prompt to your personal library — accessible from the toolbar popup anytime.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ─── FAQ ─── -->
+  <section id="faq">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label">FAQ</span>
+        <h2 class="section-title">Common<br /><em>questions</em></h2>
+      </div>
+
+      <div class="faq-list reveal">
+
+        <div class="faq-item">
+          <button class="faq-q">
+            Is Gemini Web (Free) really free? What's the catch?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-a">Yes — it piggybacks on your existing logged-in Google session to call the same internal Gemini endpoint the Gemini web UI uses. No API key, no billing. The only requirement is that you're signed into gemini.google.com in Chrome. Note that this uses an unofficial internal endpoint; if Google changes their web interface, the free mode may stop working, at which point you can switch to the Gemini API provider as a fallback.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q">
+            Are my API keys safe?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-a">Yes. API keys are stored exclusively in <code style="font-family:var(--font-mono);font-size:12.5px;">chrome.storage.sync</code> — your browser's local encrypted storage, synced across your own Chrome profile. They are never sent to any server we control. The only outbound requests are the API calls you explicitly trigger (e.g., to api.openai.com or api.anthropic.com).</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q">
+            The ✨ button isn't appearing — what do I do?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-a">First, try clicking inside the chatbox on the target page — the button appears when an input is detected. If it still doesn't appear, try refreshing the page (the extension uses a self-healing scanner but a fresh page load resolves most issues). If the problem persists, check that the extension is still listed as "Enabled" in chrome://extensions and that the page's domain matches a supported platform.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q">
+            Does it work on other AI sites not in the supported list?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-a">The extension has a generic textarea fallback, so it will attempt to inject on any page with a standard HTML textarea. However, the platform-specific DOM selectors are only tuned for ChatGPT, Claude, Gemini, and LMSYS Arena. Support for additional platforms can be added by contributing to <code style="font-family:var(--font-mono);font-size:12.5px;">platformSelectors.ts</code>.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q">
+            Can I build from source instead of downloading the zip?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-a">Absolutely. Clone the repo, run <code style="font-family:var(--font-mono);font-size:12.5px;">cd extension && npm install && npm run build</code>, then load the <code style="font-family:var(--font-mono);font-size:12.5px;">extension/dist</code> folder as an unpacked extension. Node.js v16+ is required.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FOOTER ─── -->
+  <footer>
+    <div class="container">
+      <p>
+        Built with ✨ by <a href="https://github.com/oasissan" target="_blank">oasissan</a> ·
+        <a href="https://github.com/oasissan/prompt_enhancer" target="_blank">GitHub</a> ·
+        <a href="privacy.html">Privacy Policy</a> ·
+        MIT License
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // ─── SCROLL REVEAL ───
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ─── FAQ ACCORDION ───
+    document.querySelectorAll('.faq-q').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.closest('.faq-item');
+        const isOpen = item.classList.contains('open');
+        document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+        if (!isOpen) item.classList.add('open');
+      });
+    });
+
+    // ─── NAV ACTIVE STATE ───
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-links a');
+
+    const navObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          navLinks.forEach(a => a.classList.remove('active'));
+          const active = document.querySelector(`.nav-links a[href="#${e.target.id}"]`);
+          if (active) active.style.color = 'var(--purple-lt)';
+          else navLinks.forEach(a => { if (!a.classList.contains('nav-cta')) a.style.color = ''; });
+        }
+      });
+    }, { threshold: 0.5 });
+
+    sections.forEach(s => navObs.observe(s));
+  </script>
+</body>
+</html>
